@@ -1,9 +1,13 @@
 ﻿using CryptoLabs.Ciphers.Asymmetric;
 using CryptoLabs.Ciphers.Classical;
 using CryptoLabs.Ciphers.Symmetric;
+using CryptoLabs.UtilityClasses;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using RSA = CryptoLabs.Ciphers.Asymmetric.RSA;
 
 namespace CryptoLabs
 {
@@ -48,10 +52,23 @@ namespace CryptoLabs
             Console.WriteLine("====================EndSymmetricCiphers================================");
             Console.WriteLine("====================AsymmetricCiphers==================================");
             var rsa = new RSA();
-            var encrypted = rsa.Encrypt("Viorel Bostan", 53, 59);
-            Console.WriteLine(rsa.Decrypt(encrypted, 53, 59));
+            var encrypted = rsa.Encrypt("Viorel Bostan", 59, 61);
+            Console.WriteLine(rsa.Decrypt(encrypted, 59, 61));
             Console.WriteLine("====================EndAsymetricCiphers================================");
-
+            using (SHA256 mySHA256 = SHA256.Create())
+            {
+                var initialMsgHash = mySHA256.ComputeHash(Encoding.UTF8.GetBytes("hello"));
+                var encryptedHash = rsa.Encrypt(initialMsgHash, 59, 61);
+                Console.WriteLine($"Encrypted Hash: {Convert.ToHexString(encryptedHash)}");
+                Console.WriteLine($"InitialHash {Convert.ToHexString(initialMsgHash)}");
+                var decryptedHash = rsa.Decrypt(encryptedHash, 59, 61);
+                Console.WriteLine($"DecryptHash {Convert.ToHexString(decryptedHash)}");
+            }
+            var database = new Database();
+            database.AddUser("ilietodirascu@gmail.com", "admin121");
+            database.Login("ilietodirascu@gmail.com", "admin121");
+            database.AddMessage(database.Users.First(), "hello");
+            database.VerifySignature(database.Users.First(), "hello");
         }
     }
 }

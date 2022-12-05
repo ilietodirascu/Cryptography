@@ -12,6 +12,7 @@ namespace CryptoLabs.Ciphers.UtilityClasses
         public static List<char> Alphabet { get; set; } = new List<char> { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
         public static Random Random { get; set; } = new Random();
         public static HttpClient Client { get; set; } = new();
+        public static List<int> PrimeNumbers = GetPrimesList();
         public static int GCD(int a, int b)
         {
             if (a == 0) return b;
@@ -39,10 +40,38 @@ namespace CryptoLabs.Ciphers.UtilityClasses
                 x += m0;
             return x;
         }
+        private static bool IsPrime(int n)
+        {
+            if (n == 1 || n == 0) return false;
+            for (int i = 2; i * i <= n; i++)
+            {
+                if (n % i == 0) return false;
+            }
+            return true;
+        }
         public static int Mod(int x, int m)
         {
             int r = x % m;
             return r < 0 ? r + m : r;
+        }
+        private static List<int> GetPrimesList()
+        {
+            var num = 60;
+            var listOfPrimes = new List<int>();
+            while (listOfPrimes.Count < 100)
+            {
+                ++num;
+                if (!IsPrime(num)) continue;
+                listOfPrimes.Add(num);
+            }
+            return listOfPrimes;
+        }
+        public static KeyValuePair<int,int> GetCoPrimePair()
+        {
+            int a = PrimeNumbers[Random.Next(0, PrimeNumbers.Count)];
+            int b = PrimeNumbers[Random.Next(0, PrimeNumbers.Count)];
+            if (a != b) return new KeyValuePair<int, int>(a, b);
+            return GetCoPrimePair();
         }
     }
 }

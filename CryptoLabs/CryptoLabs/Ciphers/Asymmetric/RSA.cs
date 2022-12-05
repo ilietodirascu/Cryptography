@@ -15,7 +15,7 @@ namespace CryptoLabs.Ciphers.Asymmetric
         public List<BigInteger> Encrypt(string plaintext, int p, int q)
         {
             if (Utility.GCD(p, q) != 1) throw new Exception("p and q must be coprime");
-            var intSymbols = Encoding.UTF8.GetBytes(plaintext).ToList().Select(x => Convert.ToInt32(x)).ToList();
+            var intSymbols = Encoding.BigEndianUnicode.GetBytes(plaintext).ToList().Select(x => Convert.ToInt32(x)).ToList();
             int n = p * q;
             var fi = (p - 1) * (q - 1);
             _e = ComputeE(-1, fi, n);
@@ -26,8 +26,45 @@ namespace CryptoLabs.Ciphers.Asymmetric
                 var encrypted = BigInteger.Pow(x, _e) % n;
                 encryptedIntSymbols.Add(encrypted);
             });
-            Console.WriteLine(string.Join("-", encryptedIntSymbols.Select(x => x.ToString("X")).ToList()));
             return encryptedIntSymbols;
+        }
+        public byte[] Encrypt(byte[] bytes, int p, int q)
+        {
+            if (Utility.GCD(p, q) != 1) throw new Exception("p and q must be coprime");
+            int n = p * q;
+            var fi = (p - 1) * (q - 1);
+            _e = ComputeE(-1, fi, n);
+            _d = ComputeD(1, fi, _e);
+            var encryptedIntSymbols = new List<int>();
+            bytes.ToList().ForEach(x =>
+            {
+                var encrypted = (int)(BigInteger.Pow(x, _e) % n);
+                encryptedIntSymbols.Add(encrypted);
+            });
+            var test = encryptedIntSymbols.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
+            //return BitConverter.IsLittleEndian ? test.Reverse().ToArray() : test;
+            return test;
+        }
+        public byte[] Decrypt(byte[] bytes, int p, int q)
+        {
+            var intSymbols = new List<int>();
+            for (int i = 0; i < bytes.Length; i+=4)
+            {
+                int sum = 0;
+                byte[] fourBytes = new byte[4];
+                Array.Copy(bytes, i, fourBytes, 0,4);
+                sum = BitConverter.ToInt32(fourBytes, 0);
+                intSymbols.Add(sum);
+            }
+            int n = p * q;
+            var fi = (p - 1) * (q - 1);
+            var decryptedSymbols = new List<byte>();
+            intSymbols.ToList().ForEach(x =>
+            {
+                var decrypted = (int)(BigInteger.Pow(x, _d) % n);
+                decryptedSymbols.AddRange(BitConverter.GetBytes(decrypted).Where(b => b != 0).ToList());
+            });
+            return decryptedSymbols.ToArray();
         }
         private int ComputeE(int e, int fi, int n)
         {
@@ -56,7 +93,7 @@ namespace CryptoLabs.Ciphers.Asymmetric
                 var decrypted = BigInteger.Pow(x, _d) % n;
                 decryptedSymbols.AddRange(decrypted.ToByteArray());
             });
-            return Encoding.UTF8.GetString(decryptedSymbols.ToArray());
+            return Encoding.BigEndianUnicode.GetString(decryptedSymbols.ToArray());
         }
     }
 }
